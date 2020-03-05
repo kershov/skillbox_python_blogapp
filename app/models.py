@@ -44,9 +44,6 @@ post_tags = db.Table('posts_tags',
 
 
 class Post(db.Model):
-    """
-    Table schema
-    """
     __tablename__ = "posts"
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -176,9 +173,6 @@ class Vote(db.Model):
 
 
 class CaptchaCode(db.Model):
-    """
-    Table schema
-    """
     __tablename__ = "captcha_codes"
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -210,9 +204,6 @@ class CaptchaCode(db.Model):
 
 
 class Settings(db.Model):
-    """
-    Table schema
-    """
     __tablename__ = "global_settings"
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
