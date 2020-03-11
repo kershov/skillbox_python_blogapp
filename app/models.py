@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from sqlalchemy.ext.hybrid import hybrid_property
+
 from app import db
 
 
@@ -20,7 +22,7 @@ class User(db.Model):
     """
     posts = db.relationship('Post', backref='author', lazy=True, foreign_keys="Post.user_id")
     moderated_posts = db.relationship('Post', backref='moderator', lazy=True, foreign_keys="Post.moderator_id")
-    comments = db.relationship('Comment', backref='comment', lazy=True, foreign_keys="Comment.user_id")
+    comments = db.relationship('Comment', backref='user', lazy=True, foreign_keys="Comment.user_id")
     votes = db.relationship('Vote', backref='user', lazy=True, foreign_keys="Vote.user_id")
 
     def __init__(self, *args, **kwargs):
@@ -62,7 +64,9 @@ class Post(db.Model):
 
     votes = db.relationship('Vote', backref='post', lazy=True, foreign_keys="Vote.post_id")
     comments = db.relationship('Comment', backref='post', lazy=True, foreign_keys="Comment.post_id")
-    tags = db.relationship('Tag', secondary=post_tags, lazy='subquery', backref=db.backref('posts', lazy=True))
+    tags = db.relationship('Tag', secondary=post_tags,
+                           backref=db.backref('posts', lazy='dynamic'),
+                           lazy='dynamic')
 
     def __init__(self, *args, **kwargs):
         super(Post, self).__init__(*args, **kwargs)
@@ -74,6 +78,26 @@ class Post(db.Model):
     def delete(self):
         db.session.delete(self)
         db.session.commit()
+
+    """
+    Hybrid properties
+    """
+
+    @hybrid_property
+    def comment_count(self):
+        return len(self.comments)
+
+    @hybrid_property
+    def likes(self):
+        return sum(1 for vote in self.votes if vote.value == 1)
+
+    @hybrid_property
+    def dislikes(self):
+        return sum(1 for vote in self.votes if vote.value == -1)
+
+    @hybrid_property
+    def active_posts(self):
+        return filter_by_active_posts(self.query)
 
     def __repr__(self):
         return f"<Post(id='{self.id}', title='{self.title[:25]}...', is_active={self.is_active}, " \
@@ -88,6 +112,8 @@ class Tag(db.Model):
 
     def __init__(self, *args, **kwargs):
         super(Tag, self).__init__(*args, **kwargs)
+        self.base_weight = 0.0
+        self.weight = 0.0
 
     def save(self):
         db.session.add(self)
@@ -101,8 +127,41 @@ class Tag(db.Model):
     Relations: managed by Post.posts
     """
 
+    """
+    Hybrid properties
+    """
+
+    @hybrid_property
+    def posts_tagged(self):
+        return filter_by_active_posts(Post.query.join(Post.tags).filter(Tag.id == self.id))
+
+    @hybrid_property
+    def active_tags(self):
+        """
+        JOINS: https://habr.com/ru/post/230643/
+        """
+        return filter_by_active_posts(Tag.query.with_entities(Tag, db.func.count('*').label('cnt')).join(Post.tags)) \
+            .distinct() \
+            .group_by(Tag.id) \
+            .order_by(db.desc('cnt'), db.asc(Tag.name))
+
+    @staticmethod
+    def get_weighted_tags(query=None):
+        active_tags = Tag.active_tags.all()
+        most_frequent_tag, _ = Tag.active_tags.first()
+
+        for tag, posts_tagged in active_tags:
+            tag.base_weight = posts_tagged / Post.active_posts.count()
+
+        for tag, _ in active_tags:
+            tag.weight = tag.base_weight / most_frequent_tag.base_weight
+
+        return active_tags if not query else list(
+            filter(lambda item: query.lower() in item[0].name.lower(), active_tags))
+
     def __repr__(self):
-        return f"<Tag(id={self.id}, name='{self.name}', posts_tagged={len(self.posts)})>"
+        return f"<Tag(id={self.id}, name='{self.name}', " \
+               f"posts_tagged__total={self.posts.count()}, posts_tagged__active={self.posts_tagged.count()})>"
 
 
 class Comment(db.Model):
@@ -233,3 +292,9 @@ class Settings(db.Model):
 
     def __repr__(self):
         return f"<Setting(id='{self.id}', code='{self.code}', name='{self.name}', value='{self.value}'>"
+
+
+def filter_by_active_posts(query):
+    return query.filter(Post.is_active) \
+        .filter(Post.moderation_status == 'ACCEPTED') \
+        .filter(Post.time <= datetime.utcnow())

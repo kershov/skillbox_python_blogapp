@@ -2,10 +2,9 @@ import os
 
 from dotenv import load_dotenv
 from flask import Flask
-
-# Initialize application
 from flask_sqlalchemy import SQLAlchemy
 
+# Initialize application
 app = Flask(__name__, static_folder=None, template_folder='resources/templates')
 app.url_map.strict_slashes = False
 
@@ -28,6 +27,10 @@ db = SQLAlchemy(app)
 from app import views
 
 # Register API Endpoints
-from app.api.views import api
+from app.api.init.views import api_init
+from app.api.post.views import api_post
+from app.api.tag.views import api_tag
 
-app.register_blueprint(api, url_prefix='/api')
+app.register_blueprint(api_init)
+app.register_blueprint(api_post)
+app.register_blueprint(api_tag)

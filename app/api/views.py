@@ -1,5 +1,3 @@
-from random import randint
-
 from flask import Blueprint, make_response, jsonify
 
 from app import app
