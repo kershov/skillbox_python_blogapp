@@ -10,7 +10,7 @@ class BaseConfig:
     DEBUG = False
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
     SQLALCHEMY_MIGRATE_REPO = os.path.join(base_dir, 'db_repository')   # https://habr.com/ru/post/196810/
-    SQLALCHEMY_ECHO = False
+    SQLALCHEMY_ECHO = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     BCRYPT_LOG_ROUNDS = 8
     PROPERTIES = {
