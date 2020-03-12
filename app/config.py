@@ -12,6 +12,7 @@ class BaseConfig:
     SQLALCHEMY_MIGRATE_REPO = os.path.join(base_dir, 'db_repository')   # https://habr.com/ru/post/196810/
     SQLALCHEMY_ECHO = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SECRET_KEY = os.getenv('SECRET_KEY')
     BCRYPT_LOG_ROUNDS = 8
     PROPERTIES = {
         "title": "BlogApp",

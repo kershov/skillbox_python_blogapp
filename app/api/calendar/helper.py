@@ -5,7 +5,7 @@ from app.models import Post
 
 
 def calendar_response(year):
-    return make_response(jsonify(calendar_dto(year))), 200
+    return make_response(jsonify(calendar_dto(year)), 200)
 
 
 def get_years():

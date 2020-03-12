@@ -6,7 +6,7 @@ from app.models import Vote, Post, Comment, filter_by_active_posts, Tag
 
 
 def post_response(post):
-    return make_response(jsonify(full_post_dto(post))), 200
+    return make_response(jsonify(full_post_dto(post)), 200)
 
 
 def posts_response(items, total):
@@ -16,7 +16,7 @@ def posts_response(items, total):
             simple_post_dto(post, int(num_likes), int(num_dislikes), int(num_comments))
             for post, num_likes, num_dislikes, num_comments in items
         ]
-    })), 200
+    }), 200)
 
 
 def get_active_posts(mode=None):
