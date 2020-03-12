@@ -36,4 +36,4 @@ def clear_html_tags(text):
 def time_utc_to_local(utc_dt, time_format=None):
     local_dt = utc_dt.replace(tzinfo=pytz.utc).astimezone(local_tz)
     return local_dt.strftime(time_format) if time_format else local_dt.strftime(
-        "%Y-%m-%d %H:%M")  # local_tz.normalize(local_dt)
+        "%Y-%m-%d %H:%M")

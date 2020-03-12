@@ -1,8 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from app import db
+from app.api.auth.captcha.helper import generate_captcha_code, generate_secret_code, generate_base64_image
 
 
 class User(db.Model):
@@ -237,19 +238,28 @@ class CaptchaCode(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     code = db.Column(db.String(255), nullable=False)
     secret_code = db.Column(db.String(255), unique=True, nullable=False)
-    time = db.Column(db.DateTime, nullable=False, default=datetime.now())
+    time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow())
 
     def __init__(self, *args, **kwargs):
         super(CaptchaCode, self).__init__(*args, **kwargs)
-        self.image_base_64 = None  # To be user later
-        # TODO: Methods needed:
-        #   setCode(CaptchaUtils.getRandomCode(codeLength))
-        #   setSecretCode(UUID.randomUUID().toString())
-        #   setImageBase64(CaptchaUtils.getImageBase64(getCode(), fontSize))
+        self.code = generate_captcha_code()
+        self.secret_code = generate_secret_code()
+        self.image_base_64 = generate_base64_image(self.code)
 
     def save(self):
         db.session.add(self)
+
+        # At this point, the object has been pushed to the DB,
+        # and has been automatically assigned a unique PK id
+        db.session.flush()
+
+        # Updates given object in the session with its state in the DB
+        # (and can also only refresh certain attributes - search for documentation)
+        db.session.refresh(self)
+
         db.session.commit()
+
+        return self
 
     def delete(self):
         db.session.delete(self)
@@ -257,6 +267,23 @@ class CaptchaCode(db.Model):
 
     def is_valid_code(self, user_code):
         return self.code == user_code
+
+    @staticmethod
+    def find_by_secret_code(secret_code):
+        return CaptchaCode.query.filter_by(secret_code=secret_code).first()
+
+    @staticmethod
+    def delete_outdated_captchas(ttl=None):
+        ttl = ttl or 1
+        time = datetime.utcnow() - timedelta(hours=ttl)
+
+        return CaptchaCode.query.filter(CaptchaCode.time <= time).delete()
+
+    def json(self):
+        return {
+            'secret': self.secret_code,
+            'image': self.image_base_64
+        }
 
     def __repr__(self):
         return f"<CaptchaCode(id='{self.id}', code='{self.code}', reg_time='{self.time}')>"

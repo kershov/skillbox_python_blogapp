@@ -31,9 +31,10 @@ from app.api.init.views import api_init
 from app.api.post.views import api_post
 from app.api.tag.views import api_tag
 from app.api.calendar.views import api_calendar
+from app.api.auth.captcha.views import api_captcha
 
 app.register_blueprint(api_init)
 app.register_blueprint(api_post)
 app.register_blueprint(api_tag)
 app.register_blueprint(api_calendar)
-
+app.register_blueprint(api_captcha)
