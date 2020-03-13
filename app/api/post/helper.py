@@ -61,6 +61,8 @@ def filter_posts(query=None, query_type=None, items=None):
 
 
 def paginate(offset=0, limit=10, items=None):
+    offset = offset if offset >= 0 else 0
+    limit = limit if limit > 0 else 10
     page = offset // limit + 1
     pagination = items.paginate(page=page, per_page=limit, error_out=False)
     return pagination.items, pagination.total
