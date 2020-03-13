@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from app import db
+from app import db, app, bcrypt
 from app.api.auth.captcha.helper import generate_captcha_code, generate_secret_code, generate_base64_image
 
 
@@ -10,13 +10,13 @@ class User(db.Model):
     __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    code = db.Column(db.String(255), nullable=False)
+    code = db.Column(db.String(255), nullable=True)
     email = db.Column(db.String(255), unique=True, nullable=False)
-    is_moderator = db.Column(db.Boolean, nullable=False)
+    is_moderator = db.Column(db.Boolean, nullable=False, default=False)
     name = db.Column(db.String(255), nullable=False)
     password = db.Column(db.String(255), nullable=False)
     photo = db.Column(db.Text, nullable=True)
-    reg_time = db.Column(db.DateTime, nullable=False, default=datetime.now())
+    reg_time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow())
 
     """
     Relations
@@ -31,11 +31,26 @@ class User(db.Model):
 
     def save(self):
         db.session.add(self)
+        db.session.flush()
+        db.session.refresh(self)
         db.session.commit()
+        return self
 
     def delete(self):
         db.session.delete(self)
         db.session.commit()
+
+    @staticmethod
+    def get_by_email(email):
+        return User.query.filter_by(email=email).first()
+
+    @staticmethod
+    def create_user(email, password):
+        user = User()
+        user.email = email
+        user.name = email
+        user.password = bcrypt.generate_password_hash(password, app.config['BCRYPT_LOG_ROUNDS']).decode('utf-8')
+        return user.save()
 
     def __repr__(self):
         return f"<User(id='{self.id}', email='{self.email}', name='{self.name}', reg_time='{self.reg_time}')>"

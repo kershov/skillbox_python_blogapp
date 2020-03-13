@@ -2,6 +2,7 @@ import os
 
 from dotenv import load_dotenv
 from flask import Flask
+from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
 
 # Initialize application
@@ -23,6 +24,9 @@ app.config.from_object(app_settings)
 # Initialize Flask Sql Alchemy
 db = SQLAlchemy(app)
 
+# Initialize Bcrypt
+bcrypt = Bcrypt(app)
+
 # Import the application views
 from app import views
 
@@ -32,9 +36,11 @@ from app.api.post.views import api_post
 from app.api.tag.views import api_tag
 from app.api.calendar.views import api_calendar
 from app.api.auth.captcha.views import api_captcha
+from app.api.auth.register.views import api_register
 
 app.register_blueprint(api_init)
 app.register_blueprint(api_post)
 app.register_blueprint(api_tag)
 app.register_blueprint(api_calendar)
 app.register_blueprint(api_captcha)
+app.register_blueprint(api_register)

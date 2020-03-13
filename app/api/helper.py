@@ -26,7 +26,7 @@ def response(result, status_code, message=None, errors=None):
     if errors:
         resp['errors'] = errors
 
-    return make_response(jsonify(resp)), status_code
+    return make_response(jsonify(resp), status_code)
 
 
 def clear_html_tags(text):
