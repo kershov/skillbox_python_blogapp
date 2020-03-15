@@ -1,7 +1,9 @@
+import re
+import types
+
 import pytz
 from bs4 import BeautifulSoup
-from flask import make_response, jsonify
-from werkzeug.exceptions import abort
+from flask import make_response, jsonify, abort
 
 local_tz = pytz.timezone('Europe/Moscow')
 
@@ -26,7 +28,7 @@ def check_request(request, mandatory_fields: set):
         abort(400, "Wrong body. Either one or more mandatory parameters are wrong, don't exist or misspelled. "
                    f"Mandatory parameters are: {params}.")
 
-    return data
+    return types.SimpleNamespace(**data)
 
 
 def response(result, status_code, message=None, errors=None):
@@ -57,7 +59,16 @@ def clear_html_tags(text):
     return BeautifulSoup(text, features="html.parser").get_text()
 
 
+def is_valid_email(email: str):
+    email_pattern = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9_.-]+\.[a-zA-Z]+$')
+    return re.match(email_pattern, email)
+
+
 def time_utc_to_local(utc_dt, time_format=None):
     local_dt = utc_dt.replace(tzinfo=pytz.utc).astimezone(local_tz)
     return local_dt.strftime(time_format) if time_format else local_dt.strftime(
         "%Y-%m-%d %H:%M")
+
+
+def error_response(error):
+    return response(False, error.code, message=f"{error.name}: {error.description}")

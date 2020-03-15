@@ -31,6 +31,12 @@ class BaseConfig:
         "min": 6,
         "max": 255
     }
+    MAIL_SERVER = os.getenv('MAIL_SERVER')
+    MAIL_PORT = os.getenv('MAIL_PORT')
+    MAIL_USE_SSL = os.getenv('MAIL_USE_SSL')
+    MAIL_USERNAME = os.getenv('MAIL_USERNAME')
+    MAIL_DEFAULT_SENDER = MAIL_USERNAME
+    MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
 
 
 class DevelopmentConfig(BaseConfig):

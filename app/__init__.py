@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from flask import Flask
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
+from flask_mail import Mail
 
 # Initialize application
 app = Flask(__name__, static_folder=None, template_folder='resources/templates')
@@ -27,6 +28,9 @@ db = SQLAlchemy(app)
 # Initialize Bcrypt
 bcrypt = Bcrypt(app)
 
+# Initialize Mail
+mail = Mail(app)
+
 # Import the application views
 from app import views
 
@@ -37,6 +41,7 @@ from app.api.tag.views import api_tag
 from app.api.calendar.views import api_calendar
 from app.api.auth.captcha.views import api_captcha
 from app.api.auth.register.views import api_register
+from app.api.auth.restore.views import api_restore
 
 app.register_blueprint(api_init)
 app.register_blueprint(api_post)
@@ -44,3 +49,4 @@ app.register_blueprint(api_tag)
 app.register_blueprint(api_calendar)
 app.register_blueprint(api_captcha)
 app.register_blueprint(api_register)
+app.register_blueprint(api_restore)

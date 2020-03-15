@@ -1,10 +1,8 @@
-import re
+import types
 
 from app import app
-from app.api.helper import response
+from app.api.helper import response, is_valid_email
 from app.models import CaptchaCode, User
-
-EMAIL_PATTERN = re.compile(r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b')
 
 
 def registration_success_response(user):
@@ -22,22 +20,17 @@ def validate_registration_request(data):
     pwd_min_length = app.config['PASSWORD']['min']
     pwd_max_length = app.config['PASSWORD']['max']
 
-    email = data.get('e_mail')
-    password = data.get('password')
-    captcha = data.get('captcha')
-    captcha_secret = data.get('captcha_secret')
-
-    if not re.match(EMAIL_PATTERN, email):
+    if not is_valid_email(data.e_mail):
         errors['e_mail'] = 'Wrong email.'
         check_email = False
 
-    if check_email and is_registered(email):
-        errors['e_mail'] = f"User with email '{email}' is already registered."
+    if check_email and is_registered(data.e_mail):
+        errors['e_mail'] = f"User with email '{data.e_mail}' is already registered."
 
-    if not (pwd_min_length <= len(password) <= pwd_max_length):
+    if not (pwd_min_length <= len(data.password) <= pwd_max_length):
         errors['password'] = f'Wrong password. Password has to be from {pwd_min_length} up to {pwd_max_length} chars.'
 
-    if not is_valid_captcha(captcha, captcha_secret):
+    if not is_valid_captcha(data.captcha, data.captcha_secret):
         errors['captcha'] = 'Wrong captcha.'
 
     return errors if errors else None

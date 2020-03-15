@@ -1,6 +1,6 @@
 from flask import Blueprint, abort, request
 
-from app.api.helper import response
+from app.api.helper import response, error_response
 from app.api.post.helper import posts_response, post_response, get_active_posts, paginate, filter_posts
 from app.models import Post
 
@@ -63,7 +63,7 @@ def get_post(post_id):
 
 @api_post.errorhandler(400)
 def handle_400_error(e):
-    return response(False, e.code, message=f"{e.name}: {e.description}")
+    return error_response(e)
 
 
 @api_post.errorhandler(404)
