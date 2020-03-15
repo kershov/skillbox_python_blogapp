@@ -5,7 +5,7 @@ from app.api.auth.register.helper import (
     registration_error_response,
     registration_success_response
 )
-from app.api.helper import response, check_request, error_response
+from app.api.helper import check_request, error_response
 from app.models import User
 
 api_register = Blueprint('api_register', __name__)

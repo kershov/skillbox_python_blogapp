@@ -1,5 +1,5 @@
-import re
 import types
+import uuid
 
 import pytz
 from bs4 import BeautifulSoup
@@ -15,7 +15,7 @@ def check_request(request, mandatory_fields: set):
     if not mandatory_fields:
         raise ValueError("mandatory_fields has to have at least one field.")
 
-    if request.content_type != 'application/json':
+    if 'application/json' not in request.content_type:
         abort(400, "Content-type must be 'application/json'.")
 
     if not request.data:
@@ -59,11 +59,6 @@ def clear_html_tags(text):
     return BeautifulSoup(text, features="html.parser").get_text()
 
 
-def is_valid_email(email: str):
-    email_pattern = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9_.-]+\.[a-zA-Z]+$')
-    return re.match(email_pattern, email)
-
-
 def time_utc_to_local(utc_dt, time_format=None):
     local_dt = utc_dt.replace(tzinfo=pytz.utc).astimezone(local_tz)
     return local_dt.strftime(time_format) if time_format else local_dt.strftime(
@@ -72,3 +67,7 @@ def time_utc_to_local(utc_dt, time_format=None):
 
 def error_response(error):
     return response(False, error.code, message=f"{error.name}: {error.description}")
+
+
+def generate_secret_code():
+    return str(uuid.uuid4())

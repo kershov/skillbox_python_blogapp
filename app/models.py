@@ -3,7 +3,8 @@ from datetime import datetime, timedelta
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from app import db, app, bcrypt
-from app.api.auth.captcha.helper import generate_captcha_code, generate_secret_code, generate_base64_image
+from app.api.auth.captcha.helper import generate_captcha_code, generate_base64_image
+from app.api.helper import generate_secret_code
 
 
 class User(db.Model):
@@ -54,6 +55,13 @@ class User(db.Model):
     @staticmethod
     def get_by_email(email):
         return User.query.filter_by(email=email).first()
+
+    @staticmethod
+    def get_by_code(code: str):
+        code = code.strip()
+        if not code:
+            raise ValueError("Code field can't be blank.")
+        return User.query.filter_by(code=code).first()
 
     @staticmethod
     def create_user(email, password):
@@ -290,7 +298,7 @@ class CaptchaCode(db.Model):
         return self.code == user_code
 
     @staticmethod
-    def find_by_secret_code(secret_code):
+    def get_by_secret_code(secret_code):
         return CaptchaCode.query.filter_by(secret_code=secret_code).first()
 
     @staticmethod

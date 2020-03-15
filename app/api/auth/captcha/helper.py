@@ -2,7 +2,6 @@ import base64
 import io
 import random
 import string
-import uuid
 
 from PIL import Image, ImageDraw, ImageFont
 from flask import make_response, jsonify
@@ -16,14 +15,8 @@ def captcha_response(captcha):
 
 def generate_captcha_code(code_length=None):
     code_length = code_length or app.config['CAPTCHA']['length']
-
     symbols = string.ascii_letters + string.digits
-
     return ''.join(random.choice(symbols) for _ in range(code_length))
-
-
-def generate_secret_code():
-    return str(uuid.uuid4())
 
 
 def generate_base64_image(code=None, font_size=None):
