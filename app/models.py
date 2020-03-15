@@ -14,9 +14,9 @@ class User(db.Model):
     email = db.Column(db.String(255), unique=True, nullable=False)
     is_moderator = db.Column(db.Boolean, nullable=False, default=False)
     name = db.Column(db.String(255), nullable=False)
-    password = db.Column(db.String(255), nullable=False)
     photo = db.Column(db.Text, nullable=True)
     reg_time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow())
+    _password = db.Column('password', db.String(255), nullable=False)
 
     """
     Relations
@@ -29,11 +29,22 @@ class User(db.Model):
     def __init__(self, *args, **kwargs):
         super(User, self).__init__(*args, **kwargs)
 
+    @property
+    def password(self):
+        raise AttributeError('Password is not a readable attribute.')
+
+    @password.setter
+    def password(self, password):
+        self._password = bcrypt.generate_password_hash(password, app.config['BCRYPT_LOG_ROUNDS']).decode('utf-8')
+
+    def is_valid_password(self, password):
+        return bcrypt.check_password_hash(self._password, password)
+
     def save(self):
         db.session.add(self)
         db.session.flush()
-        db.session.refresh(self)
         db.session.commit()
+        db.session.refresh(self)
         return self
 
     def delete(self):
@@ -46,10 +57,7 @@ class User(db.Model):
 
     @staticmethod
     def create_user(email, password):
-        user = User()
-        user.email = email
-        user.name = email
-        user.password = bcrypt.generate_password_hash(password, app.config['BCRYPT_LOG_ROUNDS']).decode('utf-8')
+        user = User(email=email, name=email, password=password)
         return user.save()
 
     def __repr__(self):
@@ -267,12 +275,10 @@ class CaptchaCode(db.Model):
         # At this point, the object has been pushed to the DB,
         # and has been automatically assigned a unique PK id
         db.session.flush()
+        db.session.commit()
 
         # Updates given object in the session with its state in the DB
-        # (and can also only refresh certain attributes - search for documentation)
         db.session.refresh(self)
-
-        db.session.commit()
 
         return self
 

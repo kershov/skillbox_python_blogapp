@@ -1,8 +1,32 @@
 import pytz
 from bs4 import BeautifulSoup
 from flask import make_response, jsonify
+from werkzeug.exceptions import abort
 
 local_tz = pytz.timezone('Europe/Moscow')
+
+
+def check_request(request, mandatory_fields: set):
+    if not isinstance(mandatory_fields, set):
+        raise TypeError("mandatory_fields has to be of type set.")
+
+    if not mandatory_fields:
+        raise ValueError("mandatory_fields has to have at least one field.")
+
+    if request.content_type != 'application/json':
+        abort(400, "Content-type must be 'application/json'.")
+
+    if not request.data:
+        abort(400, 'Request has no body.')
+
+    data = request.get_json()
+
+    if mandatory_fields != set(data):
+        params = ', '.join(f"'{field}'" for field in mandatory_fields)
+        abort(400, "Wrong body. Either one or more mandatory parameters are wrong, don't exist or misspelled. "
+                   f"Mandatory parameters are: {params}.")
+
+    return data
 
 
 def response(result, status_code, message=None, errors=None):

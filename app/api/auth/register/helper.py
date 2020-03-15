@@ -8,7 +8,7 @@ EMAIL_PATTERN = re.compile(r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b'
 
 
 def registration_success_response(user):
-    return response(True, 200, message=f"User '{user.email}' successfully registered.")
+    return response(True, 200, message=f"User with email '{user.email}' has been successfully registered.")
 
 
 def registration_error_response(errors):
@@ -17,6 +17,7 @@ def registration_error_response(errors):
 
 def validate_registration_request(data):
     errors = {}
+    check_email = True
 
     pwd_min_length = app.config['PASSWORD']['min']
     pwd_max_length = app.config['PASSWORD']['max']
@@ -28,8 +29,9 @@ def validate_registration_request(data):
 
     if not re.match(EMAIL_PATTERN, email):
         errors['e_mail'] = 'Wrong email.'
+        check_email = False
 
-    if is_registered(email):
+    if check_email and is_registered(email):
         errors['e_mail'] = f"User with email '{email}' is already registered."
 
     if not (pwd_min_length <= len(password) <= pwd_max_length):
@@ -38,7 +40,7 @@ def validate_registration_request(data):
     if not is_valid_captcha(captcha, captcha_secret):
         errors['captcha'] = 'Wrong captcha.'
 
-    return errors if bool(errors) else None
+    return errors if errors else None
 
 
 def is_registered(email):

@@ -1,8 +1,11 @@
-from flask import Blueprint, request, abort
+from flask import Blueprint, request
 
-from app.api.auth.register.helper import validate_registration_request, registration_error_response, \
+from app.api.auth.register.helper import (
+    validate_registration_request,
+    registration_error_response,
     registration_success_response
-from app.api.helper import response
+)
+from app.api.helper import response, check_request
 from app.models import User
 
 api_register = Blueprint('api_register', __name__)
@@ -10,19 +13,9 @@ api_register = Blueprint('api_register', __name__)
 
 @api_register.route('/api/auth/register', methods=['POST'])
 def register_user():
-    if request.content_type != 'application/json':
-        abort(400, "Content-type must be 'application/json'.")
+    mandatory_fields = {'e_mail', 'password', 'captcha', 'captcha_secret'}
 
-    data = request.data
-
-    if not data:
-        abort(400, 'Request has no body.')
-
-    data = request.get_json()
-
-    if {'e_mail', 'password', 'captcha', 'captcha_secret'} != set(data):
-        abort(400, "Wrong body. Either one or more mandatory parameters are wrong, don't exist or misspelled. "
-                   "Mandatory parameters are: 'e_mail', 'password', 'captcha', 'captcha_secret'.")
+    data = check_request(request, mandatory_fields)
 
     errors = validate_registration_request(data)
 
