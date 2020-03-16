@@ -39,6 +39,8 @@ from app.api.init.views import api_init
 from app.api.post.views import api_post
 from app.api.tag.views import api_tag
 from app.api.calendar.views import api_calendar
+
+from app.api.auth.views import api_auth
 from app.api.auth.captcha.views import api_captcha
 from app.api.auth.register.views import api_register
 from app.api.auth.restore.views import api_restore_password
@@ -47,6 +49,8 @@ app.register_blueprint(api_init)
 app.register_blueprint(api_post)
 app.register_blueprint(api_tag)
 app.register_blueprint(api_calendar)
+
+app.register_blueprint(api_auth)
 app.register_blueprint(api_captcha)
 app.register_blueprint(api_register)
 app.register_blueprint(api_restore_password)

@@ -3,7 +3,10 @@ from flask_mail import Message
 
 from app import mail
 from app.api.helper import response
-from app.api.validators import is_valid_email, is_registered, validate_password, validate_captcha, validate_code
+from app.api.validators import (validate_password,
+                                validate_captcha,
+                                validate_code,
+                                validate_email_and_user_is_not_registered)
 
 
 def restore_response(email):
@@ -21,15 +24,7 @@ def restore_error_response(errors):
 
 def validate_restore_request(data):
     errors = {}
-    check_email = True
-
-    if not is_valid_email(data.email):
-        errors['email'] = 'Неправильный формат адреса.'
-        check_email = False
-
-    if check_email and not is_registered(data.email):
-        errors['email'] = f"Пользователь с таким адресом не зарегистрирован."
-
+    validate_email_and_user_is_not_registered(data, errors)
     return errors if errors else None
 
 

@@ -1,14 +1,20 @@
 import os
 
-from flask import render_template, send_from_directory
+from flask import render_template, send_from_directory, g, session
 
 from app import app
 from app.config import base_dir
+from app.models import User
 
 
 def send_static_resource(path):
     static_root = os.path.join(base_dir, "resources", "static")
     return send_from_directory(static_root, path)
+
+
+@app.before_request
+def before_request():
+    g.user = User.get_by_email(session['email']) if 'email' in session else None
 
 
 @app.route('/', defaults={'path': ''})

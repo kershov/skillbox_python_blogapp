@@ -31,13 +31,14 @@ def check_request(request, mandatory_fields: set):
     return types.SimpleNamespace(**data)
 
 
-def response(result, status_code, message=None, errors=None):
+def response(result, status_code, message=None, errors=None, payload=None):
     """
     Helper method to make an Http response
     :param result: Result (True or False)
     :param status_code: Http status code
     :param message: Message
     :param errors: Errors if any
+    :param payload: Any payload in a form of dictionary
     :return:
     """
 
@@ -51,6 +52,9 @@ def response(result, status_code, message=None, errors=None):
 
     if errors:
         resp['errors'] = errors
+
+    if payload and isinstance(payload, dict):
+        resp = dict(resp, **payload)
 
     return make_response(jsonify(resp), status_code)
 

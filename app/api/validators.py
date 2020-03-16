@@ -40,3 +40,15 @@ def validate_code(data, errors):
     if not data.code or not User.get_by_code(data.code):
         errors['code'] = 'Ссылка для восстановления пароля устарела. ' \
                          '<a href="/login/restore-password">Запросить ссылку снова</a>.'
+
+
+def validate_email_and_user_is_not_registered(data, errors):
+    check_email = True
+    email = data.email if 'email' in dir(data) else data.e_mail
+
+    if not is_valid_email(email):
+        errors['email'] = 'Неправильный формат адреса.'
+        check_email = False
+
+    if check_email and not is_registered(email):
+        errors['email'] = f"Пользователь с таким адресом не зарегистрирован."
