@@ -20,6 +20,10 @@ def posts_response(items, total):
 
 
 def get_active_posts(mode=None):
+    return filter_by_active_posts(get_posts(mode))
+
+
+def get_posts(mode=None):
     orders = {
         'recent': (db.desc(Post.time),),
         'popular': (db.desc('commentCount'), db.desc(Post.time)),
@@ -41,7 +45,20 @@ def get_active_posts(mode=None):
         Comment.post_id == Post.id
     ).as_scalar().label('commentCount')
 
-    return filter_by_active_posts(Post.query.with_entities(Post, likes, dislikes, comments)).order_by(*order)
+    return Post.query.with_entities(Post, likes, dislikes, comments).order_by(*order)
+
+
+def get_user_posts(user, status=None):
+    statuses = {
+        'inactive': (db.not_(Post.is_active),),
+        'pending': (Post.is_active, Post.moderation_status == 'NEW'),
+        'declined': (Post.is_active, Post.moderation_status == 'DECLINED'),
+        'published': (Post.is_active, Post.moderation_status == 'ACCEPTED'),
+    }
+
+    filter_criteria = statuses.get(status, statuses['inactive'])
+
+    return get_posts().filter(Post.user_id == user.id).filter(*filter_criteria)
 
 
 def filter_posts(query=None, query_type=None, items=None):

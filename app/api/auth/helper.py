@@ -1,3 +1,4 @@
+import types
 from functools import wraps
 
 from flask import g
@@ -11,8 +12,8 @@ def login_response(user):
     return response(True, 200, payload=user_dto(user))
 
 
-def login_error_response(errors):
-    return response(False, 400, errors=errors)
+def login_error_response(message=None, errors=None):
+    return response(False, 400, message=message, errors=errors)
 
 
 def authorized_user_response(user_id):
@@ -37,7 +38,7 @@ def auth_required(f):
         user = g.user
         if not user:
             return response(False, 401, message='Authorization required.')
-        return f(User.query.get(user.get('id'), *args, **kwargs))
+        return f(types.SimpleNamespace(**user), *args, **kwargs)
     return wrapper
 
 

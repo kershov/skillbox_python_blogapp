@@ -2,7 +2,7 @@ from flask import Blueprint, abort, request
 
 from app.api.auth.helper import auth_required
 from app.api.helper import response, error_response
-from app.api.post.helper import posts_response, post_response, get_active_posts, paginate, filter_posts
+from app.api.post.helper import posts_response, post_response, get_active_posts, paginate, filter_posts, get_user_posts
 from app.models import Post
 
 api_post = Blueprint('api_post', __name__)
@@ -48,7 +48,7 @@ def get_filtered_posts(request_type):
     query = request.args.get(query_type, None, type=str)
 
     if None in (offset, limit, query):
-        abort(400, "Bad request.")
+        abort(400, "Wrong request parameters.")
 
     filtered_posts = filter_posts(query=query.lower(), query_type=query_type, items=get_active_posts())
 
@@ -68,7 +68,25 @@ def get_post(post_id):
 @api_post.route('/api/post/my', methods=['GET'])
 @auth_required
 def get_my_posts(user):
-    return user.email, 200
+    offset = request.args.get('offset', None, type=int)
+    limit = request.args.get('limit', None, type=int)
+    status = request.args.get('status', None, type=str)
+
+    if None in (offset, limit, status):
+        abort(400, "Wrong request parameters.")
+
+    status = status.lower()
+
+    if status not in {'inactive', 'pending', 'declined', 'published'}:
+        abort(400, "Wrong status. Statuses allowed: 'inactive', 'pending', 'declined', 'published'.")
+
+    posts, posts_total = paginate(
+        offset=offset,
+        limit=limit,
+        items=get_user_posts(user, status)
+    )
+
+    return posts_response(posts, posts_total)
 
 
 @api_post.errorhandler(400)

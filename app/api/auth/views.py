@@ -1,5 +1,3 @@
-import types
-
 from flask import Blueprint, request, session, g
 
 from app.api.auth.helper import (login_error_response,
@@ -20,11 +18,11 @@ def login():
     errors, user = validate_login_request(data)
 
     if errors:
-        return login_error_response(errors)
+        return login_error_response(errors=errors)
 
     if 'user' not in session:
         session.permanent = True
-        session['user'] = dict(id=user.id, email=user.email)
+        session['user'] = dict(id=user.id, email=user.email, moderator=user.is_moderator)
 
     return login_response(user)
 
@@ -38,3 +36,8 @@ def check():
 def logout():
     user = session.pop('user', None)
     return logout_response(user.get('email') if user else None)
+
+
+@api_auth.errorhandler(400)
+def handle_400_error(e):
+    return login_error_response(message=e.description)
