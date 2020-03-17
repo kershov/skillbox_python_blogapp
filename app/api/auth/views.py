@@ -22,7 +22,7 @@ def login():
 
     if 'user' not in session:
         session.permanent = True
-        session['user'] = dict(id=user.id, email=user.email, moderator=user.is_moderator)
+        session['user'] = dict(id=user.id, email=user.email, is_moderator=user.is_moderator)
 
     return login_response(user)
 

@@ -2,7 +2,17 @@ from flask import Blueprint, abort, request
 
 from app.api.auth.helper import auth_required
 from app.api.helper import response, error_response
-from app.api.post.helper import posts_response, post_response, get_active_posts, paginate, filter_posts, get_user_posts
+from app.api.post.helper import (
+    posts_response,
+    post_response,
+    get_active_posts,
+    paginate,
+    filter_posts,
+    get_my_posts,
+    get_moderated_posts,
+    posts_processor,
+    moderated_posts_processor
+)
 from app.models import Post
 
 api_post = Blueprint('api_post', __name__)
@@ -22,7 +32,7 @@ def get_posts():
 
     posts, posts_total = paginate(offset=offset, limit=limit, items=get_active_posts(mode=mode))
 
-    return posts_response(posts, posts_total)
+    return posts_response(processor=posts_processor, items=posts, total=posts_total)
 
 
 @api_post.route('/api/post/<string:request_type>', methods=['GET'])
@@ -54,7 +64,7 @@ def get_filtered_posts(request_type):
 
     posts, posts_total = paginate(offset=offset, limit=limit, items=filtered_posts)
 
-    return posts_response(posts, posts_total)
+    return posts_response(processor=posts_processor, items=posts, total=posts_total)
 
 
 @api_post.route('/api/post/<int:post_id>', methods=['GET'])
@@ -67,7 +77,7 @@ def get_post(post_id):
 
 @api_post.route('/api/post/my', methods=['GET'])
 @auth_required
-def get_my_posts(user):
+def my_posts(user):
     offset = request.args.get('offset', None, type=int)
     limit = request.args.get('limit', None, type=int)
     status = request.args.get('status', None, type=str)
@@ -83,14 +93,46 @@ def get_my_posts(user):
     posts, posts_total = paginate(
         offset=offset,
         limit=limit,
-        items=get_user_posts(user, status)
+        items=get_my_posts(user, status)
     )
 
-    return posts_response(posts, posts_total)
+    return posts_response(processor=posts_processor, items=posts, total=posts_total)
+
+
+@api_post.route('/api/post/moderation', methods=['GET'])
+@auth_required
+def moderated_posts(user):
+    if not user.is_moderator:
+        abort(403, "You're not not allowed to moderate posts.")
+
+    offset = request.args.get('offset', None, type=int)
+    limit = request.args.get('limit', None, type=int)
+    status = request.args.get('status', None, type=str)
+
+    if None in (offset, limit, status):
+        abort(400, "Wrong request parameters.")
+
+    status = status.lower()
+
+    if status not in {'new', 'declined', 'accepted'}:
+        abort(400, "Wrong status. Statuses allowed: 'new', 'declined', 'accepted'.")
+
+    posts, posts_total = paginate(
+        offset=offset,
+        limit=limit,
+        items=get_moderated_posts(user, status)
+    )
+
+    return posts_response(processor=moderated_posts_processor, items=posts, total=posts_total)
 
 
 @api_post.errorhandler(400)
 def handle_400_error(e):
+    return error_response(e)
+
+
+@api_post.errorhandler(403)
+def handle_403_error(e):
     return error_response(e)
 
 

@@ -9,13 +9,10 @@ def post_response(post):
     return make_response(jsonify(full_post_dto(post)), 200)
 
 
-def posts_response(items, total):
+def posts_response(processor, items, total):
     return make_response(jsonify({
         'count': total,
-        'posts': [
-            simple_post_dto(post, int(num_likes), int(num_dislikes), int(num_comments))
-            for post, num_likes, num_dislikes, num_comments in items
-        ]
+        'posts': processor(items)
     }), 200)
 
 
@@ -48,7 +45,7 @@ def get_posts(mode=None):
     return Post.query.with_entities(Post, likes, dislikes, comments).order_by(*order)
 
 
-def get_user_posts(user, status=None):
+def get_my_posts(user, status=None):
     statuses = {
         'inactive': (db.not_(Post.is_active),),
         'pending': (Post.is_active, Post.moderation_status == 'NEW'),
@@ -59,6 +56,18 @@ def get_user_posts(user, status=None):
     filter_criteria = statuses.get(status, statuses['inactive'])
 
     return get_posts().filter(Post.user_id == user.id).filter(*filter_criteria)
+
+
+def get_moderated_posts(user, status=None):
+    statuses = {
+        'new': (Post.moderation_status == 'NEW', Post.moderator_id.is_(None)),
+        'declined': (Post.moderation_status == 'DECLINED', Post.moderator_id == user.id),
+        'accepted': (Post.moderation_status == 'ACCEPTED', Post.moderator_id == user.id),
+    }
+
+    filter_criteria = statuses.get(status, statuses['new'])
+
+    return Post.query.filter(Post.is_active, *filter_criteria).order_by(db.desc(Post.time))
 
 
 def filter_posts(query=None, query_type=None, items=None):
@@ -83,6 +92,22 @@ def paginate(offset=0, limit=10, items=None):
     page = offset // limit + 1
     pagination = items.paginate(page=page, per_page=limit, error_out=False)
     return pagination.items, pagination.total
+
+
+"""
+Various Post Processors
+"""
+
+
+def posts_processor(items):
+    return [
+        simple_post_dto(post, int(num_likes), int(num_dislikes), int(num_comments))
+        for post, num_likes, num_dislikes, num_comments in items
+    ]
+
+
+def moderated_posts_processor(items):
+    return [moderated_post_dto(post) for post in items]
 
 
 """
@@ -135,4 +160,14 @@ def post_common_fields(post, num_likes=None, num_dislikes=None, num_comments=Non
         'commentCount': num_comments if num_comments else post.comment_count,
         'likeCount': num_likes if num_likes else post.likes,
         'dislikeCount': num_dislikes if num_dislikes else post.dislikes,
+    }
+
+
+def moderated_post_dto(post):
+    return {
+        'id': post.id,
+        'time': time_utc_to_local(post.time),
+        'user': user_dto(post.author),
+        'title': post.title,
+        'announce': clear_html_tags(post.text)
     }
