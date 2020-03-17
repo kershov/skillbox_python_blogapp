@@ -9,8 +9,8 @@ class BaseConfig:
     Base application configuration
     """
     DEBUG = False
+    STATIC_RESOURCES_DIR = os.path.join(base_dir, 'resources', 'static')
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
-    SQLALCHEMY_MIGRATE_REPO = os.path.join(base_dir, 'db_repository')   # https://habr.com/ru/post/196810/
     SQLALCHEMY_ECHO = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = os.getenv('SECRET_KEY')
@@ -39,6 +39,8 @@ class BaseConfig:
     MAIL_USERNAME = os.getenv('MAIL_USERNAME')
     MAIL_DEFAULT_SENDER = MAIL_USERNAME
     MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+    MAX_CONTENT_LENGTH = 5 * 1024 * 1024                    # 5 megabytes
 
 
 class DevelopmentConfig(BaseConfig):

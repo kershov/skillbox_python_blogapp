@@ -1,12 +1,11 @@
 import base64
 import io
-import random
-import string
 
 from PIL import Image, ImageDraw, ImageFont
 from flask import make_response, jsonify
 
 from app import app
+from app.helper import generate_random_string
 
 
 def captcha_response(captcha):
@@ -15,8 +14,7 @@ def captcha_response(captcha):
 
 def generate_captcha_code(code_length=None):
     code_length = code_length or app.config['CAPTCHA']['length']
-    symbols = string.ascii_letters + string.digits
-    return ''.join(random.choice(symbols) for _ in range(code_length))
+    return generate_random_string(code_length)
 
 
 def generate_base64_image(code=None, font_size=None):

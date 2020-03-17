@@ -25,7 +25,7 @@ def get_posts():
     mode = request.args.get('mode', None, type=str)
 
     if None in (offset, limit, mode):
-        abort(400, "Bad request.")
+        abort(400, "Wrong request parameters.")
 
     if mode.lower() not in ['recent', 'popular', 'best', 'early']:
         abort(400, "Wrong mode. Modes allowed: 'recent', 'popular', 'best', 'early'.")
