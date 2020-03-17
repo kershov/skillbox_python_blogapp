@@ -15,8 +15,8 @@ def login_error_response(errors):
     return response(False, 400, errors=errors)
 
 
-def authorized_user_response(user):
-    return login_response(user)
+def authorized_user_response(user_id):
+    return login_response(User.query.get(user_id))
 
 
 def unauthorized_user_response():
@@ -37,7 +37,7 @@ def auth_required(f):
         user = g.user
         if not user:
             return response(False, 401, message='Authorization required.')
-        return f(user, *args, **kwargs)
+        return f(User.query.get(user.get('id'), *args, **kwargs))
     return wrapper
 
 

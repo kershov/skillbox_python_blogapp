@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 
 base_dir = os.path.abspath(os.path.dirname(__file__))
 
@@ -13,6 +14,7 @@ class BaseConfig:
     SQLALCHEMY_ECHO = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = os.getenv('SECRET_KEY')
+    PERMANENT_SESSION_LIFETIME = timedelta(days=5)
     BCRYPT_LOG_ROUNDS = 8
     PROPERTIES = {
         "title": "BlogApp",

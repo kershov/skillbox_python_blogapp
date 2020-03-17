@@ -4,7 +4,6 @@ from flask import render_template, send_from_directory, g, session
 
 from app import app
 from app.config import base_dir
-from app.models import User
 
 
 def send_static_resource(path):
@@ -14,7 +13,7 @@ def send_static_resource(path):
 
 @app.before_request
 def before_request():
-    g.user = User.get_by_email(session['email']) if 'email' in session else None
+    g.user = session['user'] if 'user' in session else None
 
 
 @app.route('/', defaults={'path': ''})

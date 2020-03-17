@@ -1,5 +1,6 @@
 from flask import Blueprint, abort, request
 
+from app.api.auth.helper import auth_required
 from app.api.helper import response, error_response
 from app.api.post.helper import posts_response, post_response, get_active_posts, paginate, filter_posts
 from app.models import Post
@@ -58,7 +59,16 @@ def get_filtered_posts(request_type):
 
 @api_post.route('/api/post/<int:post_id>', methods=['GET'])
 def get_post(post_id):
-    return post_response(Post.query.get_or_404(post_id, f"There's no post with id={post_id}."))
+    post = Post.query.get_or_404(post_id, f"There's no post with id={post_id}.")
+    post.view_count += 1
+    post.save()
+    return post_response(post)
+
+
+@api_post.route('/api/post/my', methods=['GET'])
+@auth_required
+def get_my_posts(user):
+    return user.email, 200
 
 
 @api_post.errorhandler(400)

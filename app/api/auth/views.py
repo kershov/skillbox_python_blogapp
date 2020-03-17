@@ -1,3 +1,5 @@
+import types
+
 from flask import Blueprint, request, session, g
 
 from app.api.auth.helper import (login_error_response,
@@ -20,17 +22,19 @@ def login():
     if errors:
         return login_error_response(errors)
 
-    session['email'] = user.email
+    if 'user' not in session:
+        session.permanent = True
+        session['user'] = dict(id=user.id, email=user.email)
 
     return login_response(user)
 
 
 @api_auth.route('/api/auth/check', methods=['GET'])
 def check():
-    return authorized_user_response(g.user) if g.user else unauthorized_user_response()
+    return authorized_user_response(g.user.get('id')) if g.user else unauthorized_user_response()
 
 
 @api_auth.route('/api/auth/logout', methods=['GET'])
 def logout():
-    email = session.pop('email', None)
-    return logout_response(email)
+    user = session.pop('user', None)
+    return logout_response(user.get('email') if user else None)
