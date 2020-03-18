@@ -5,6 +5,8 @@ import pytz
 from bs4 import BeautifulSoup
 from flask import make_response, jsonify, abort
 
+from app.models import Settings
+
 local_tz = pytz.timezone('Europe/Moscow')
 
 
@@ -103,3 +105,19 @@ def process_moderation_request(post, moderator_id, status):
 
     return response(True, 200, message=f"Status for post id={post.id} successfully updated from "
                                        f"'{old_status}' to '{post.moderation_status}'.")
+
+
+"""
+Settings
+"""
+
+
+def validate_settings_request(data):
+    return all(isinstance(value, bool) for value in data.__dict__.values())
+
+
+def save_settings(data):
+    for code, value in data.__dict__.items():
+        option = Settings.query.filter_by(code=code).first()
+        option.value = 'YES' if value else 'NO'
+        option.save()
