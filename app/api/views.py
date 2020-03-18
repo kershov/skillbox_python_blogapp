@@ -2,8 +2,14 @@ from flask import Blueprint, make_response, jsonify, abort, request
 
 from app import app
 from app.api.auth.helper import auth_required
-from app.api.helper import error_response, check_request, process_moderation_request, validate_settings_request, \
-    response, save_settings
+from app.api.helper import (
+    error_response,
+    check_request,
+    process_moderation_request,
+    is_valid_settings_request,
+    response,
+    save_settings
+)
 from app.models import Post, Settings
 
 api = Blueprint('api', __name__)
@@ -50,8 +56,8 @@ def put_settings(user):
     mandatory_fields = {'MULTIUSER_MODE', 'POST_PREMODERATION', 'STATISTICS_IS_PUBLIC'}
     data = check_request(request, mandatory_fields)
 
-    if not validate_settings_request(data):
-        abort(400, 'Wrong value type for one of the options. Only boolean is allowed.')
+    if not is_valid_settings_request(data):
+        abort(400, "Wrong value type for one of the options. Only 'true' or 'false' are allowed.")
 
     save_settings(data)
 

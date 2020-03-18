@@ -112,7 +112,7 @@ Settings
 """
 
 
-def validate_settings_request(data):
+def is_valid_settings_request(data):
     return all(isinstance(value, bool) for value in data.__dict__.values())
 
 
