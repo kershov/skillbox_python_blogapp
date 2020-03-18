@@ -1,7 +1,7 @@
 from flask import Blueprint, abort, request
 
 from app.api.auth.helper import auth_required
-from app.api.helper import response, error_response
+from app.api.helper import response, error_response, check_request
 from app.api.post.helper import (
     posts_response,
     post_response,
@@ -11,8 +11,8 @@ from app.api.post.helper import (
     get_my_posts,
     get_moderated_posts,
     posts_processor,
-    moderated_posts_processor
-)
+    moderated_posts_processor,
+    process_vote_and_get_response)
 from app.models import Post
 
 api_post = Blueprint('api_post', __name__)
@@ -124,6 +124,25 @@ def moderated_posts(user):
     )
 
     return posts_response(processor=moderated_posts_processor, items=posts, total=posts_total)
+
+
+@api_post.route('/api/post/<string:vote_type>', methods=['POST'])
+@auth_required
+def vote_post(user, vote_type):
+    vote_type = vote_type.lower()
+    vote_types = {'like': 1, 'dislike': -1}
+
+    if vote_type and vote_type not in vote_types:
+        abort(400, "Wrong vote type. Types allowed: 'like', 'dislike'.")
+
+    mandatory_fields = {'post_id', }
+    data = check_request(request, mandatory_fields)
+    post = Post.active_posts.filter_by(id=data.post_id).first()
+
+    if not post:
+        abort(404, f"Пост с идентификатором {data.post_id} не найден.")
+
+    return process_vote_and_get_response(post, user, vote_types[vote_type])
 
 
 @api_post.errorhandler(400)

@@ -1,7 +1,7 @@
 from flask import jsonify, make_response
 
 from app import db
-from app.api.helper import time_utc_to_local, clear_html_tags
+from app.api.helper import time_utc_to_local, clear_html_tags, response
 from app.models import Vote, Post, Comment, filter_by_active_posts, Tag
 
 
@@ -92,6 +92,25 @@ def paginate(offset=0, limit=10, items=None):
     page = offset // limit + 1
     pagination = items.paginate(page=page, per_page=limit, error_out=False)
     return pagination.items, pagination.total
+
+
+"""
+Votes: Likes & Dislikes
+"""
+
+
+def process_vote_and_get_response(post, user, value):
+    vote = Vote.get_by_post_and_user(post.id, user.id)
+
+    if vote:
+        if vote.value == value:
+            return response(False, 200)
+        vote.delete()
+
+    vote = Vote(post_id=post.id, user_id=user.id, value=value)
+    vote.save()
+
+    return response(True, 200)
 
 
 """

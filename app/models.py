@@ -252,11 +252,18 @@ class Vote(db.Model):
 
     def save(self):
         db.session.add(self)
+        db.session.flush()
         db.session.commit()
+        db.session.refresh(self)
+        return self
 
     def delete(self):
         db.session.delete(self)
         db.session.commit()
+
+    @staticmethod
+    def get_by_post_and_user(post_id, user_id):
+        return Vote.query.filter_by(post_id=post_id, user_id=user_id).first()
 
     def __repr__(self):
         return f"<Vote(id={self.id}, post_id={self.post_id}, user_id={self.user_id}, value='{self.value}', " \
