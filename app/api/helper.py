@@ -75,3 +75,31 @@ def error_response(error):
 
 def generate_secret_code():
     return str(uuid.uuid4())
+
+
+"""
+Moderation
+"""
+
+
+def validate_moderation_request(data):
+    errors = {}
+    valid_decisions = {'accept', 'decline'}
+
+    if data.decision.lower() in valid_decisions:
+        errors['moderation'] = "Wrong decision type. Types allowed: 'accept', 'decline'."
+
+    return errors if errors else None
+
+
+def process_moderation_request(post, moderator_id, status):
+    if post.moderator_id is not None and post.moderator_id != moderator_id:
+        return abort(403)
+
+    old_status = post.moderation_status
+    post.moderation_status = status
+    post.moderator_id = moderator_id
+    post.save()
+
+    return response(True, 200, message=f"Status for post id={post.id} successfully updated from "
+                                       f"'{old_status}' to '{post.moderation_status}'.")

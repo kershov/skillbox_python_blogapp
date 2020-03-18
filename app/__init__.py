@@ -38,7 +38,7 @@ mail = Mail(app)
 from app import views
 
 # Register API Endpoints
-from app.api.init.views import api_init
+from app.api.views import api
 from app.api.post.views import api_post
 from app.api.tag.views import api_tag
 from app.api.calendar.views import api_calendar
@@ -49,7 +49,7 @@ from app.api.auth.register.views import api_register
 from app.api.auth.restore.views import api_restore_password
 from app.api.image.views import api_image
 
-app.register_blueprint(api_init)
+app.register_blueprint(api)
 app.register_blueprint(api_post)
 app.register_blueprint(api_tag)
 app.register_blueprint(api_calendar)

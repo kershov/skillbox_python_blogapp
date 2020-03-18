@@ -105,7 +105,10 @@ class Post(db.Model):
 
     def save(self):
         db.session.add(self)
+        db.session.flush()
         db.session.commit()
+        db.session.refresh(self)
+        return self
 
     def delete(self):
         db.session.delete(self)
