@@ -1,10 +1,10 @@
+import uuid
 from datetime import datetime, timedelta
 
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from app import db, app, bcrypt
 from app.api.auth.captcha.helper import generate_captcha_code, generate_base64_image
-from app.api.helper import generate_secret_code
 
 
 class User(db.Model):
@@ -284,7 +284,7 @@ class CaptchaCode(db.Model):
     def __init__(self, *args, **kwargs):
         super(CaptchaCode, self).__init__(*args, **kwargs)
         self.code = generate_captcha_code()
-        self.secret_code = generate_secret_code()
+        self.secret_code = str(uuid.uuid4())
         self.image_base_64 = generate_base64_image(self.code)
 
     def save(self):

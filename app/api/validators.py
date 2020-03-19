@@ -14,16 +14,20 @@ def is_registered(email):
 
 
 def is_valid_password(password: str):
-    min_length = app.config['PASSWORD']['min']
-    max_length = app.config['PASSWORD']['max']
+    min_length, max_length = app.config['PASSWORD']['min'], app.config['PASSWORD']['max']
     return min_length <= len(password) <= max_length
 
 
-def validate_password(data, errors):
-    if not is_valid_password(data.password):
-        min_length = app.config['PASSWORD']['min']
-        max_length = app.config['PASSWORD']['max']
-        errors['password'] = f'Wrong password. Password has to be from {min_length} up to {max_length} chars.'
+def validate_username(name, errors):
+    min_length, max_length = app.config['USERNAME']['min'], app.config['USERNAME']['max']
+    if not (min_length <= len(name) <= max_length):
+        errors['name'] = f'Имя должно быть от {min_length} до {max_length} символов.'
+
+
+def validate_password(password, errors):
+    if not is_valid_password(password):
+        min_length, max_length = app.config['PASSWORD']['min'], app.config['PASSWORD']['max']
+        errors['password'] = f'Пароль должен быть от {min_length} до {max_length} символов.'
 
 
 def is_valid_captcha(code, secret):
@@ -31,20 +35,19 @@ def is_valid_captcha(code, secret):
     return captcha is not None and captcha.is_valid_code(code)
 
 
-def validate_captcha(data, errors):
-    if not is_valid_captcha(data.captcha, data.captcha_secret):
+def validate_captcha(captcha, captcha_secret, errors):
+    if not is_valid_captcha(captcha, captcha_secret):
         errors['captcha'] = 'Код с картинки введен неверно.'
 
 
-def validate_code(data, errors):
-    if not data.code or not User.get_by_code(data.code):
+def validate_code(code, errors):
+    if not code or not User.get_by_code(code):
         errors['code'] = 'Ссылка для восстановления пароля устарела. ' \
                          '<a href="/login/restore-password">Запросить ссылку снова</a>.'
 
 
-def validate_email_and_user_is_not_registered(data, errors):
+def validate_email_and_user_is_not_registered(email, errors):
     check_email = True
-    email = data.email if 'email' in dir(data) else data.e_mail
 
     if not is_valid_email(email):
         errors['email'] = 'Неправильный формат адреса.'

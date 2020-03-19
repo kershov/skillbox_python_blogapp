@@ -24,15 +24,15 @@ def restore_error_response(errors):
 
 def validate_restore_request(data):
     errors = {}
-    validate_email_and_user_is_not_registered(data, errors)
+    validate_email_and_user_is_not_registered(data.email, errors)
     return errors if errors else None
 
 
 def validate_password_request(data):
     errors = {}
-    validate_code(data, errors)
-    validate_password(data, errors)
-    validate_captcha(data, errors)
+    validate_code(data.code, errors)
+    validate_password(data.password, errors)
+    validate_captcha(data.captcha, data.captcha_secret, errors)
     return errors if errors else None
 
 

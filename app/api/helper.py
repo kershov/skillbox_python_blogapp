@@ -1,5 +1,4 @@
 import types
-import uuid
 
 import pytz
 from bs4 import BeautifulSoup
@@ -34,16 +33,6 @@ def check_request(request, mandatory_fields: set):
 
 
 def response(result, status_code, message=None, errors=None, payload=None):
-    """
-    Helper method to make an Http response
-    :param result: Result (True or False)
-    :param status_code: Http status code
-    :param message: Message
-    :param errors: Errors if any
-    :param payload: Any payload in a form of dictionary
-    :return:
-    """
-
     resp = {
         'result': result,
         'status': status_code
@@ -73,10 +62,6 @@ def time_utc_to_local(utc_dt, time_format=None):
 
 def error_response(error):
     return response(False, error.code, message=f"{error.name}: {error.description}")
-
-
-def generate_secret_code():
-    return str(uuid.uuid4())
 
 
 """

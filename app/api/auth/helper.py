@@ -44,8 +44,8 @@ def auth_required(f):
 
 def validate_login_request(data):
     errors = {}
-    validate_email_and_user_is_not_registered(data, errors)
-    validate_password(data, errors)
+    validate_email_and_user_is_not_registered(data.e_mail, errors)
+    validate_password(data.password, errors)
 
     if not errors:
         user = User.get_by_email(data.e_mail)

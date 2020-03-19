@@ -10,7 +10,7 @@ def before_request():
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
-def catch_all(path):
+def index(path):
     url_parts = path.split('/')
 
     if len(url_parts) > 0:

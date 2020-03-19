@@ -21,8 +21,8 @@ def validate_registration_request(data):
     if check_email and is_registered(data.e_mail):
         errors['email'] = f"Пользователь с таким адресом уже зарегистрирован."
 
-    validate_password(data, errors)
+    validate_password(data.password, errors)
 
-    validate_captcha(data, errors)
+    validate_captcha(data.captcha, data.captcha_secret, errors)
 
     return errors if errors else None

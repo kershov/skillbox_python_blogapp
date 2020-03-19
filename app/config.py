@@ -29,6 +29,10 @@ class BaseConfig:
         "ttl": 1,           # hours
         "font-size": 18
     }
+    USERNAME = {
+        "min": 3,
+        "max": 255
+    }
     PASSWORD = {
         "min": 6,
         "max": 255

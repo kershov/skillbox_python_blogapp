@@ -21,6 +21,15 @@ def upload_file(file):
     return '/' + get_relative_path(upload_dir, full_path).replace('\\', '/')
 
 
+def remove_file(file):
+    photo = os.path.join(app.config['APP_ROOT_DIR'], os.path.normpath(file)[1:])
+
+    try:
+        os.remove(photo)
+    except OSError:
+        pass
+
+
 def allowed_file(file):
     return '.' in file.filename and file.filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 

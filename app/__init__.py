@@ -48,6 +48,7 @@ from app.api.auth.captcha.views import api_captcha
 from app.api.auth.register.views import api_register
 from app.api.auth.restore.views import api_restore_password
 from app.api.image.views import api_image
+from app.api.profile.views import api_profile
 
 app.register_blueprint(api)
 app.register_blueprint(api_post)
@@ -59,3 +60,4 @@ app.register_blueprint(api_captcha)
 app.register_blueprint(api_register)
 app.register_blueprint(api_restore_password)
 app.register_blueprint(api_image)
+app.register_blueprint(api_profile)

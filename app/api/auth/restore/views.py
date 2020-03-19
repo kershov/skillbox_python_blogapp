@@ -1,3 +1,5 @@
+import uuid
+
 from flask import Blueprint, request
 
 from app.api.auth.restore.helper import (
@@ -8,7 +10,7 @@ from app.api.auth.restore.helper import (
     validate_password_request,
     password_response
 )
-from app.api.helper import check_request, error_response, generate_secret_code
+from app.api.helper import check_request, error_response
 from app.models import User
 
 api_restore_password = Blueprint('api_restore', __name__)
@@ -23,7 +25,7 @@ def restore():
     if errors:
         return restore_error_response(errors)
 
-    code = generate_secret_code()
+    code = str(uuid.uuid4())
 
     send_email(
         recipient=data.email,
