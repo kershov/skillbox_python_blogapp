@@ -134,6 +134,21 @@ class Post(db.Model):
     def active_posts(self):
         return filter_by_active_posts(self.query)
 
+    @staticmethod
+    def count_by_author(user_id=None):
+        f = (Post.user_id is not None, ) if not user_id else (Post.user_id == user_id, )
+        return Post.query.filter(*f).count()
+
+    @staticmethod
+    def count_views_by_user(user_id=None):
+        f = (Post.user_id is not None,) if not user_id else (Post.user_id == user_id,)
+        return int(Post.query.filter(*f).value(db.func.sum(Post.view_count)))
+
+    @staticmethod
+    def get_first_publication_date_by_user(user_id):
+        f = (Post.user_id is not None,) if not user_id else (Post.user_id == user_id,)
+        return Post.query.filter(*f).value(db.func.date_format(db.func.min(Post.time), '%Y-%m-%d %H:%m'))
+
     def __repr__(self):
         return f"<Post(id='{self.id}', title='{self.title[:25]}...', is_active={self.is_active}, " \
                f"moderation_status='{self.moderation_status}', view_count='{self.view_count}', time='{self.time}')>"
@@ -268,6 +283,12 @@ class Vote(db.Model):
     def get_by_post_and_user(post_id, user_id):
         return Vote.query.filter_by(post_id=post_id, user_id=user_id).first()
 
+    @staticmethod
+    def count_by_user_and_vote_type(user_id, vote_type='like'):
+        vote_types = {'like': 1, 'dislike': -1}
+        filter_criteria = (Vote.user_id is not None,) if not user_id else (Vote.user_id == user_id,)
+        return Vote.query.filter(Vote.value == vote_types[vote_type], *filter_criteria).count()
+
     def __repr__(self):
         return f"<Vote(id={self.id}, post_id={self.post_id}, user_id={self.user_id}, value='{self.value}', " \
                f"time='{self.time}')>"
@@ -343,18 +364,14 @@ class Settings(db.Model):
         db.session.add(self)
         db.session.commit()
 
-    def update(self, code=None, name=None, value=None):
-        if code is not None:
-            self.code = code
-        if name is not None:
-            self.name = name
-        if value is not None:
-            self.value = value
-        db.session.commit()
-
     def delete(self):
         db.session.delete(self)
         db.session.commit()
+
+    @staticmethod
+    def get_by_code(code, as_is=False):
+        option = Settings.query.filter_by(code=code).first().value
+        return option if as_is else {'YES': True, 'NO': False}.get(option)
 
     def __repr__(self):
         return f"<Setting(id='{self.id}', code='{self.code}', name='{self.name}', value='{self.value}'>"
