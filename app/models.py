@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime, timedelta
 
+import pytz
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from app import db, app, bcrypt
@@ -16,6 +17,7 @@ class User(db.Model):
     is_moderator = db.Column(db.Boolean, nullable=False, default=False)
     name = db.Column(db.String(255), nullable=False)
     photo = db.Column(db.Text, nullable=True)
+    # TODO: Replace `datetime.utcnow()` to `datetime.now()`
     reg_time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow())
     _password = db.Column('password', db.String(255), nullable=False)
 
@@ -84,9 +86,10 @@ class Post(db.Model):
     title = db.Column(db.String(255), nullable=False)
     text = db.Column(db.Text, nullable=False)
     is_active = db.Column(db.Boolean, nullable=False)
-    time = db.Column(db.DateTime, nullable=False, default=datetime.now())
+    # TODO: Replace `default=datetime.now(tz=pytz.utc)` to `datetime.now()`
+    time = db.Column(db.DateTime, nullable=False, default=datetime.now(tz=pytz.utc))
     moderation_status = db.Column(db.String(10), nullable=False)
-    view_count = db.Column(db.Integer, nullable=False)
+    view_count = db.Column(db.Integer, nullable=False, default=0)
 
     """
     Relations
@@ -160,14 +163,17 @@ class Tag(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(255), nullable=False, unique=True)
 
-    def __init__(self, *args, **kwargs):
-        super(Tag, self).__init__(*args, **kwargs)
+    def __init__(self, name):
+        self.name = name
         self.base_weight = 0.0
         self.weight = 0.0
 
     def save(self):
         db.session.add(self)
+        db.session.flush()
         db.session.commit()
+        db.session.refresh(self)
+        return self
 
     def delete(self):
         db.session.delete(self)
@@ -208,6 +214,14 @@ class Tag(db.Model):
 
         return active_tags if not query else list(
             filter(lambda item: query.lower() in item[0].name.lower(), active_tags))
+
+    @staticmethod
+    def save_tag(name):
+        tag = Tag.query.filter(db.func.lower(Tag.name) == name.lower()).first()
+        return tag if tag else Tag(name).save()
+
+    def __new__(cls, *args, **kwargs):
+        return super(Tag, cls).__new__(cls)
 
     def __repr__(self):
         return f"<Tag(id={self.id}, name='{self.name}', " \
@@ -300,6 +314,7 @@ class CaptchaCode(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     code = db.Column(db.String(255), nullable=False)
     secret_code = db.Column(db.String(255), unique=True, nullable=False)
+    # TODO: Replace `default=datetime.utcnow()` to `datetime.now()`
     time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow())
 
     def __init__(self, *args, **kwargs):
@@ -377,6 +392,8 @@ class Settings(db.Model):
         return f"<Setting(id='{self.id}', code='{self.code}', name='{self.name}', value='{self.value}'>"
 
 
+# TODO: Convert to @staticmethod in Post that returns tuple with filters
+# TODO: Replace `default=datetime.utcnow()` to `datetime.now()`
 def filter_by_active_posts(query):
     return query.filter(Post.is_active) \
         .filter(Post.moderation_status == 'ACCEPTED') \

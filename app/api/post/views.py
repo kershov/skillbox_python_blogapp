@@ -12,7 +12,7 @@ from app.api.post.helper import (
     get_moderated_posts,
     posts_processor,
     moderated_posts_processor,
-    process_vote_and_get_response)
+    process_vote_and_get_response, validate_add_post_request, add_post_error_response, save_post, add_post_response)
 from app.models import Post
 
 api_post = Blueprint('api_post', __name__)
@@ -143,6 +143,28 @@ def vote_post(user, vote_type):
         abort(404, f"Пост с идентификатором {data.post_id} не найден.")
 
     return process_vote_and_get_response(post, user, vote_types[vote_type])
+
+
+"""
+New Post
+"""
+
+
+@api_post.route('/api/post', methods=['POST'])
+@auth_required
+def add_post(user):
+    mandatory_fields = {'time', 'active', 'title', 'text', 'tags'}
+    data = check_request(request, mandatory_fields)
+    errors = validate_add_post_request(data)
+
+    if errors:
+        return add_post_error_response(errors)
+
+    saved_post = save_post(post=None, user_id=user.id, data=data)
+
+    # Notify post was successfully created via Telegram
+
+    return add_post_response(saved_post.id)
 
 
 @api_post.errorhandler(400)

@@ -1,8 +1,12 @@
+from datetime import datetime
+
+import pytz
 from flask import jsonify, make_response
 
 from app import db
-from app.api.helper import time_utc_to_local, clear_html_tags, response
-from app.models import Vote, Post, Comment, filter_by_active_posts, Tag
+from app.api.helper import time_utc_to_local, clear_html_tags, response, time_local_to_utc
+from app.api.validators import validate_title, validate_text
+from app.models import Vote, Post, Comment, filter_by_active_posts, Tag, User
 
 
 def post_response(post):
@@ -111,6 +115,66 @@ def process_vote_and_get_response(post, user, value):
     vote.save()
 
     return response(True, 200)
+
+
+"""
+Add Post
+"""
+
+
+def add_post_response(post_id):
+    return response(False, 200, message=f'Post successfully saved with id={post_id}.')
+
+
+def add_post_error_response(errors):
+    return response(False, 400, errors=errors)
+
+
+def validate_add_post_request(data):
+    errors = {}
+    check_tags = True
+
+    validate_title(data.title, errors)
+    validate_text(data.text, errors)
+
+    if data.active not in [0, 1]:
+        errors['active'] = 'Неверное значение. Разрешенные значения: 0, 1.'
+
+    if not isinstance(data.tags, list):
+        errors['tags'] = 'Неверное значение. Необходимо передать список тегов.'
+        check_tags = False
+
+    if check_tags and not all(isinstance(tag, str) for tag in data.tags):
+        errors['tags'] = 'Неверное значение. Теги должны быть строками.'
+
+    try:
+        datetime.strptime(data.time, "%Y-%m-%dT%H:%M")
+    except ValueError:
+        errors['time'] = 'Неверный формат даты. Допустимый формат: yyyy-mm-ddThh:mm.'
+
+    return errors
+
+
+def save_post(post, user_id, data):
+    post_to_save = post if post else Post()
+
+    now = datetime.now(tz=pytz.utc)
+    post_time = time_local_to_utc(datetime.strptime(data.time, "%Y-%m-%dT%H:%M"), return_dt=True)
+    author = User.query.get(user_id)
+
+    post_to_save.title = data.title
+    post_to_save.text = data.text
+    post_to_save.is_active = data.active
+    post_to_save.time = now if post_time <= now else post_time
+    post_to_save.author = author
+
+    if post is None or (author.id == post_to_save.author.id and not author.is_moderator):
+        post_to_save.moderation_status = 'NEW'
+
+    for tag_name in data.tags:
+        post_to_save.tags.append(Tag.save_tag(tag_name))
+
+    return post_to_save.save()
 
 
 """

@@ -24,19 +24,6 @@ class BaseConfig:
         "copyright": "Konstantin Ershov",
         "copyrightFrom": "2020"
     }
-    CAPTCHA = {
-        "length": 6,        # chars
-        "ttl": 1,           # hours
-        "font-size": 18
-    }
-    USERNAME = {
-        "min": 3,
-        "max": 255
-    }
-    PASSWORD = {
-        "min": 6,
-        "max": 255
-    }
     MAIL_SERVER = os.getenv('MAIL_SERVER')
     MAIL_PORT = os.getenv('MAIL_PORT')
     MAIL_USE_SSL = os.getenv('MAIL_USE_SSL')
@@ -45,6 +32,16 @@ class BaseConfig:
     MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
     MAX_CONTENT_LENGTH = 5 * 1024 * 1024                    # 5 megabytes
+
+    CAPTCHA = {
+        "length": 6,        # chars
+        "ttl": 1,           # hours
+        "font-size": 18
+    }
+    USERNAME = {"min": 3, "max": 255}
+    PASSWORD = {"min": 6, "max": 255}
+    TITLE = {'min': 5, 'max': 255}
+    TEXT = {'min': 10, 'max': 5000}
 
 
 class DevelopmentConfig(BaseConfig):

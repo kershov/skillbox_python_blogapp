@@ -56,8 +56,13 @@ def clear_html_tags(text):
 
 def time_utc_to_local(utc_dt, time_format=None):
     local_dt = utc_dt.replace(tzinfo=pytz.utc).astimezone(local_tz)
-    return local_dt.strftime(time_format) if time_format else local_dt.strftime(
-        "%Y-%m-%d %H:%M")
+    return local_dt.strftime(time_format) if time_format else local_dt.strftime("%Y-%m-%d %H:%M")
+
+
+def time_local_to_utc(local_dt, return_dt=False, time_format=None):
+    local_dt = local_dt.replace(tzinfo=local_tz).astimezone(pytz.utc)
+    return local_dt if return_dt else local_dt.strftime(time_format) \
+        if time_format else local_dt.strftime("%Y-%m-%d %H:%M")
 
 
 def error_response(error):

@@ -55,3 +55,15 @@ def validate_email_and_user_is_not_registered(email, errors):
 
     if check_email and not is_registered(email):
         errors['email'] = f"Пользователь с таким адресом не зарегистрирован."
+
+
+def validate_title(title, errors):
+    min_length, max_length = app.config['TITLE']['min'], app.config['TITLE']['max']
+    if not (min_length <= len(title) <= max_length):
+        errors['title'] = f'Заголовок дожен быть от {min_length} до {max_length} символов.'
+
+
+def validate_text(text, errors):
+    min_length, max_length = app.config['TEXT']['min'], app.config['TEXT']['max']
+    if not (min_length <= len(text) <= max_length):
+        errors['text'] = f'Текст дожен быть от {min_length} до {max_length} символов.'
