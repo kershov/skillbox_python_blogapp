@@ -3,7 +3,8 @@ import types
 from bs4 import BeautifulSoup
 from flask import make_response, jsonify, abort
 
-from app.models import Settings
+from app.api.validators import validate_text
+from app.models import Settings, Post, Comment
 
 
 def check_request(request, mandatory_fields: set):
@@ -97,3 +98,33 @@ def save_settings(data):
         option = Settings.query.filter_by(code=code).first()
         option.value = 'YES' if value else 'NO'
         option.save()
+
+
+"""
+Comments
+"""
+
+
+def validate_comment_request(data):
+    errors = {}
+    validate_text(data.text, errors)
+
+    post = Post.query.get(data.post_id)
+
+    if not post:
+        errors['post_id'] = f'Пост с id={data.post_id} не найден.'
+
+    if data.parent_id:
+        parent_comment = Comment.query.get(data.parent_id)
+        if not parent_comment or parent_comment.post_id != post.id:
+            errors['parent_id'] = f'Родительский комментарий указан неверно.'
+
+    return errors
+
+
+def comment_response(comment):
+    return response(True, 200, payload={'id': comment.id})
+
+
+def comment_error_response(errors):
+    return response(False, 400, errors=errors)

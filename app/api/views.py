@@ -8,9 +8,9 @@ from app.api.helper import (
     process_moderation_request,
     is_valid_settings_request,
     response,
-    save_settings
-)
-from app.models import Post, Settings
+    save_settings,
+    validate_comment_request, comment_error_response, comment_response)
+from app.models import Post, Settings, Comment
 
 api = Blueprint('api', __name__)
 
@@ -62,6 +62,28 @@ def put_settings(user):
     save_settings(data)
 
     return response(True, 200)
+
+
+@api.route('/api/comment', methods=['POST'])
+@auth_required
+def add_comment(user):
+    mandatory_fields = {'post_id', 'parent_id', 'text'}
+    data = check_request(request, mandatory_fields)
+    errors = validate_comment_request(data)
+
+    if errors:
+        return comment_error_response(errors)
+
+    comment = Comment(
+        user_id=user.id,
+        post_id=data.post_id,
+        parent_id=data.parent_id if data.parent_id else None,
+        text=data.text
+    )
+
+    # Notify comment was successfully added via Telegram
+
+    return comment_response(comment.save())
 
 
 @api.errorhandler(400)

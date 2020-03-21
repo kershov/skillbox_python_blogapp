@@ -22,7 +22,7 @@ def profile(user):
     data = None
 
     if request.form:
-        data = get_form_data(request.form)
+        data = get_form_data(request)
     elif request.data:
         data = get_json_data(request)
 
