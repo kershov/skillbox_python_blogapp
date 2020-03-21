@@ -12,6 +12,6 @@ def get_calendar():
     year = request.args.get('year', None, type=int)
 
     if not year:
-        year = datetime.utcnow().year
+        year = datetime.now().year
 
     return calendar_response(year)

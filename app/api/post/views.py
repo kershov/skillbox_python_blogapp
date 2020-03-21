@@ -13,7 +13,7 @@ from app.api.post.helper import (
     posts_processor,
     moderated_posts_processor,
     process_vote_and_get_response, validate_add_post_request, add_post_error_response, save_post, add_post_response)
-from app.models import Post
+from app.models import Post, User
 
 api_post = Blueprint('api_post', __name__)
 
@@ -160,9 +160,39 @@ def add_post(user):
     if errors:
         return add_post_error_response(errors)
 
-    saved_post = save_post(post=None, user_id=user.id, data=data)
+    author = User.query.get(user.id)
+
+    saved_post = save_post(post=None, author=author, data=data)
 
     # Notify post was successfully created via Telegram
+
+    return add_post_response(saved_post.id)
+
+
+"""
+Edit Existing Post 
+"""
+
+
+@api_post.route('/api/post/<int:post_id>', methods=['PUT'])
+@auth_required
+def edit_post(user, post_id):
+    post = Post.query.get_or_404(post_id)
+
+    mandatory_fields = {'time', 'active', 'title', 'text', 'tags'}
+    data = check_request(request, mandatory_fields)
+    errors = validate_add_post_request(data)
+
+    if errors:
+        return add_post_error_response(errors)
+
+    author = User.query.get(user.id)
+
+    if post.author != author and (
+            not author.is_moderator or (post.moderator is not None and post.moderator != author)):
+        abort(403, "You're not allowed to edit this post.")
+
+    saved_post = save_post(post=post, author=author, data=data)
 
     return add_post_response(saved_post.id)
 

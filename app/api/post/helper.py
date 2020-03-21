@@ -1,12 +1,11 @@
 from datetime import datetime
 
-import pytz
 from flask import jsonify, make_response
 
 from app import db
-from app.api.helper import time_utc_to_local, clear_html_tags, response, time_local_to_utc
+from app.api.helper import clear_html_tags, response
 from app.api.validators import validate_title, validate_text
-from app.models import Vote, Post, Comment, filter_by_active_posts, Tag, User
+from app.models import Vote, Post, Comment, filter_by_active_posts, Tag
 
 
 def post_response(post):
@@ -155,12 +154,11 @@ def validate_add_post_request(data):
     return errors
 
 
-def save_post(post, user_id, data):
+def save_post(post, author, data):
     post_to_save = post if post else Post()
 
-    now = datetime.now(tz=pytz.utc)
-    post_time = time_local_to_utc(datetime.strptime(data.time, "%Y-%m-%dT%H:%M"), return_dt=True)
-    author = User.query.get(user_id)
+    now = datetime.now()
+    post_time = datetime.strptime(data.time, "%Y-%m-%dT%H:%M")
 
     post_to_save.title = data.title
     post_to_save.text = data.text
@@ -168,13 +166,32 @@ def save_post(post, user_id, data):
     post_to_save.time = now if post_time <= now else post_time
     post_to_save.author = author
 
-    if post is None or (author.id == post_to_save.author.id and not author.is_moderator):
+    if post is None or (author == post_to_save.author and not author.is_moderator):
         post_to_save.moderation_status = 'NEW'
 
-    for tag_name in data.tags:
-        post_to_save.tags.append(Tag.save_tag(tag_name))
+    if data.tags:
+        update_post_tags(post_to_save.tags, data.tags)
 
     return post_to_save.save()
+
+
+def update_post_tags(post_tags, updated_tags):
+    proposed_tags = set(updated_tags)
+    current_tags = set(tag.name for tag in post_tags)
+
+    if current_tags != proposed_tags:
+        tags_to_delete = current_tags - proposed_tags
+        tags_to_add = proposed_tags - current_tags
+
+        if tags_to_delete:
+            update_tag_list(post_tags.remove, tags_to_delete)
+
+        if tags_to_add:
+            update_tag_list(post_tags.append, tags_to_add)
+
+
+def update_tag_list(list_action, items):
+    _ = [list_action(Tag.save_tag(tag_name)) for tag_name in items]
 
 
 """
@@ -209,7 +226,7 @@ def comment_dto(comment):
     return {
         'id': comment.id,
         'text': comment.text,
-        'time': time_utc_to_local(comment.time),
+        'time': datetime.strftime(comment.time, "%Y-%m-%d %H:%M"),
         'user': {
             **user_dto(comment.user),
             'photo': comment.user.photo,
@@ -237,7 +254,9 @@ def post_common_fields(post, num_likes=None, num_dislikes=None, num_comments=Non
     return {
         'id': post.id,
         'title': post.title,
-        'time': time_utc_to_local(post.time),
+        'time': datetime.strftime(post.time, "%Y-%m-%d %H:%M"),
+        # TODO: BUG: Frontend app doesn't consider this field properly while editing a post
+        'active': post.is_active,
         'user': user_dto(post.author),
         'viewCount': post.view_count,
         'commentCount': num_comments if num_comments else post.comment_count,
@@ -249,7 +268,7 @@ def post_common_fields(post, num_likes=None, num_dislikes=None, num_comments=Non
 def moderated_post_dto(post):
     return {
         'id': post.id,
-        'time': time_utc_to_local(post.time),
+        'time': datetime.strftime(post.time, "%Y-%m-%d %H:%M"),
         'user': user_dto(post.author),
         'title': post.title,
         'announce': clear_html_tags(post.text)

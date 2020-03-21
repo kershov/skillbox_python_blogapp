@@ -1,7 +1,6 @@
 import uuid
 from datetime import datetime, timedelta
 
-import pytz
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from app import db, app, bcrypt
@@ -17,8 +16,7 @@ class User(db.Model):
     is_moderator = db.Column(db.Boolean, nullable=False, default=False)
     name = db.Column(db.String(255), nullable=False)
     photo = db.Column(db.Text, nullable=True)
-    # TODO: Replace `datetime.utcnow()` to `datetime.now()`
-    reg_time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow())
+    reg_time = db.Column(db.DateTime, nullable=False, default=datetime.now())
     _password = db.Column('password', db.String(255), nullable=False)
 
     """
@@ -86,8 +84,7 @@ class Post(db.Model):
     title = db.Column(db.String(255), nullable=False)
     text = db.Column(db.Text, nullable=False)
     is_active = db.Column(db.Boolean, nullable=False)
-    # TODO: Replace `default=datetime.now(tz=pytz.utc)` to `datetime.now()`
-    time = db.Column(db.DateTime, nullable=False, default=datetime.now(tz=pytz.utc))
+    time = db.Column(db.DateTime, nullable=False, default=datetime.now())
     moderation_status = db.Column(db.String(10), nullable=False)
     view_count = db.Column(db.Integer, nullable=False, default=0)
 
@@ -314,8 +311,7 @@ class CaptchaCode(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     code = db.Column(db.String(255), nullable=False)
     secret_code = db.Column(db.String(255), unique=True, nullable=False)
-    # TODO: Replace `default=datetime.utcnow()` to `datetime.now()`
-    time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow())
+    time = db.Column(db.DateTime, nullable=False, default=datetime.now())
 
     def __init__(self, *args, **kwargs):
         super(CaptchaCode, self).__init__(*args, **kwargs)
@@ -350,7 +346,7 @@ class CaptchaCode(db.Model):
     @staticmethod
     def delete_outdated_captchas(ttl=None):
         ttl = ttl or 1
-        time = datetime.utcnow() - timedelta(hours=ttl)
+        time = datetime.now() - timedelta(hours=ttl)
 
         return CaptchaCode.query.filter(CaptchaCode.time <= time).delete()
 
@@ -393,8 +389,7 @@ class Settings(db.Model):
 
 
 # TODO: Convert to @staticmethod in Post that returns tuple with filters
-# TODO: Replace `default=datetime.utcnow()` to `datetime.now()`
 def filter_by_active_posts(query):
     return query.filter(Post.is_active) \
         .filter(Post.moderation_status == 'ACCEPTED') \
-        .filter(Post.time <= datetime.utcnow())
+        .filter(Post.time <= datetime.now())
