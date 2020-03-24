@@ -1,13 +1,16 @@
 import types
 
-from bs4 import BeautifulSoup
-from flask import make_response, jsonify, abort
+from flask import make_response, jsonify, abort, current_app, request
 
 from app.api.validators import validate_text
 from app.models import Settings, Post, Comment
+from app.tg.client import send_telegram_message
+from app.tg.helper import escape
 
 
 def check_request(request, mandatory_fields: set):
+    data = None
+
     if not isinstance(mandatory_fields, set):
         raise TypeError("mandatory_fields has to be of type set.")
 
@@ -20,7 +23,10 @@ def check_request(request, mandatory_fields: set):
     if not request.data:
         abort(400, 'Request has no body.')
 
-    data = request.get_json()
+    try:
+        data = request.get_json()
+    except Exception:
+        abort(400, "Invalid body format: data can't be decoded.")
 
     if mandatory_fields != set(data):
         params = ', '.join(f"'{field}'" for field in mandatory_fields)
@@ -46,10 +52,6 @@ def response(result, status_code, message=None, errors=None, payload=None):
         resp = dict(resp, **payload)
 
     return make_response(jsonify(resp), status_code)
-
-
-def clear_html_tags(text):
-    return BeautifulSoup(text, features="html.parser").get_text()
 
 
 def error_response(error):
@@ -128,3 +130,16 @@ def comment_response(comment):
 
 def comment_error_response(errors):
     return response(False, 400, errors=errors)
+
+
+def notify_comment_added(comment):
+    email = escape(comment.user.email)
+    post_id = comment.post.id
+    post_title = escape(comment.post.title)
+    text = escape(comment.text)
+    host = request.host_url
+
+    message = f"Пользователь *{email}* добавил комментарий к посту " \
+              f"\"[{post_title}]({host}post/{post_id})\" \\(Post ID: {post_id}\\)\\.\n\n*Текст комментария:*\n{text}\n\n" \
+              f"\\#комментарии"
+    send_telegram_message(message)

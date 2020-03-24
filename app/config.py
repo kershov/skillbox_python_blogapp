@@ -16,14 +16,8 @@ class BaseConfig:
     SECRET_KEY = os.getenv('SECRET_KEY')
     PERMANENT_SESSION_LIFETIME = timedelta(days=5)
     BCRYPT_LOG_ROUNDS = 8
-    PROPERTIES = {
-        "title": "BlogApp",
-        "subtitle": "Skillbox Graduation Work: Simple Blog Engine",
-        "phone": "+7 000 765-4321",
-        "email": "konstantin.ershov@gmail.com",
-        "copyright": "Konstantin Ershov",
-        "copyrightFrom": "2020"
-    }
+
+    # Mail Client Settings
     MAIL_SERVER = os.getenv('MAIL_SERVER')
     MAIL_PORT = os.getenv('MAIL_PORT')
     MAIL_USE_SSL = os.getenv('MAIL_USE_SSL')
@@ -33,11 +27,30 @@ class BaseConfig:
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
     MAX_CONTENT_LENGTH = 5 * 1024 * 1024                    # 5 megabytes
 
+    # Telegram Client Settings
+    TELEGRAM = {
+        'enabled': os.getenv('TELEGRAM_ENABLED'),
+        'proxy-url': os.getenv('TELEGRAM_PROXY_URL'),
+        'proxy-jwt-token': os.getenv('TELEGRAM_PROXY_JWT_AUTH_TOKEN'),
+        'timeout': (60, 60)                                 # Connection, Read
+    }
+
+    # Various App Properties & Configs
+    PROPERTIES = {
+        "title": "BlogApp",
+        "subtitle": "Skillbox Graduation Work: Simple Blog Engine",
+        "phone": "+7 000 765-4321",
+        "email": "konstantin.ershov@gmail.com",
+        "copyright": "Konstantin Ershov",
+        "copyrightFrom": "2020"
+    }
+
     CAPTCHA = {
         "length": 6,        # chars
         "ttl": 1,           # hours
         "font-size": 18
     }
+
     USERNAME = {"min": 3, "max": 255}
     PASSWORD = {"min": 6, "max": 255}
     TITLE = {'min': 5, 'max': 255}

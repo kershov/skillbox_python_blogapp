@@ -9,7 +9,7 @@ from app.api.helper import (
     is_valid_settings_request,
     response,
     save_settings,
-    validate_comment_request, comment_error_response, comment_response)
+    validate_comment_request, comment_error_response, comment_response, notify_comment_added)
 from app.models import Post, Settings, Comment
 
 api = Blueprint('api', __name__)
@@ -81,16 +81,13 @@ def add_comment(user):
         text=data.text
     )
 
-    # Notify comment was successfully added via Telegram
+    comment = comment.save()
 
-    return comment_response(comment.save())
+    notify_comment_added(comment)
+
+    return comment_response(comment)
 
 
-@api.errorhandler(400)
+@api.errorhandler(Exception)
 def handle_400_error(e):
-    return error_response(e)
-
-
-@api.errorhandler(403)
-def handle_403_error(e):
     return error_response(e)

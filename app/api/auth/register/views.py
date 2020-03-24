@@ -3,8 +3,8 @@ from flask import Blueprint, request
 from app.api.auth.register.helper import (
     validate_registration_request,
     registration_error_response,
-    registration_success_response
-)
+    registration_success_response,
+    notify_user_registered)
 from app.api.helper import check_request, error_response
 from app.models import User
 
@@ -21,6 +21,8 @@ def register_user():
         return registration_error_response(errors)
 
     user = User.create_user(data.e_mail, data.password)
+
+    notify_user_registered(user)
 
     return registration_success_response(user)
 

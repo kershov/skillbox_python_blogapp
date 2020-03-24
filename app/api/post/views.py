@@ -12,7 +12,8 @@ from app.api.post.helper import (
     get_moderated_posts,
     posts_processor,
     moderated_posts_processor,
-    process_vote_and_get_response, validate_add_post_request, add_post_error_response, save_post, add_post_response)
+    process_vote_and_get_response, validate_add_post_request, add_post_error_response, save_post, add_post_response,
+    notify_post_added)
 from app.models import Post, User
 
 api_post = Blueprint('api_post', __name__)
@@ -164,7 +165,7 @@ def add_post(user):
 
     saved_post = save_post(post=None, author=author, data=data)
 
-    # Notify post was successfully created via Telegram
+    notify_post_added(saved_post)
 
     return add_post_response(saved_post.id)
 
@@ -193,6 +194,9 @@ def edit_post(user, post_id):
         abort(403, "You're not allowed to edit this post.")
 
     saved_post = save_post(post=post, author=author, data=data)
+
+    if saved_post.moderation_status == 'NEW':
+        notify_post_added(saved_post)
 
     return add_post_response(saved_post.id)
 

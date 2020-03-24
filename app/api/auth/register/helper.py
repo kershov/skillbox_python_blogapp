@@ -1,5 +1,7 @@
 from app.api.helper import response
 from app.api.validators import is_valid_email, is_registered, validate_password, validate_captcha
+from app.tg.client import send_telegram_message
+from app.tg.helper import escape
 
 
 def registration_success_response(user):
@@ -26,3 +28,8 @@ def validate_registration_request(data):
     validate_captcha(data.captcha, data.captcha_secret, errors)
 
     return errors if errors else None
+
+
+def notify_user_registered(user):
+    message = f"Зарегистрирован новый пользователь: {escape(user.email)}\n\n\\#регистрация"
+    send_telegram_message(message)

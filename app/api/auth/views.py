@@ -1,4 +1,4 @@
-from flask import Blueprint, request, session, g, url_for, redirect
+from flask import Blueprint, request, session, g
 
 from app.api.auth.helper import (login_error_response,
                                  validate_login_request,

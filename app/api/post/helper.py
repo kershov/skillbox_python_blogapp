@@ -1,11 +1,14 @@
 from datetime import datetime
 
-from flask import jsonify, make_response
+from flask import jsonify, make_response, request
 
 from app import db
-from app.api.helper import clear_html_tags, response
+from app.api.helper import response
 from app.api.validators import validate_title, validate_text
+from app.helper import clear_html_tags
 from app.models import Vote, Post, Comment, filter_by_active_posts, Tag
+from app.tg.client import send_telegram_message
+from app.tg.helper import escape
 
 
 def post_response(post):
@@ -192,6 +195,17 @@ def update_post_tags(post_tags, updated_tags):
 
 def update_tag_list(list_action, items):
     _ = [list_action(Tag.save_tag(tag_name)) for tag_name in items]
+
+
+def notify_post_added(post):
+    email = escape(post.author.email)
+    post_id = post.id
+    post_title = escape(post.title)
+    host = request.host_url
+
+    message = f"Пользователь *{email}* добавил новый или изменил ранее опубликованный пост " \
+              f"\"[{post_title}]({host}post/{post_id})\" \\(Post ID: {post_id}\\)\\.\n\n\\#модерация"
+    send_telegram_message(message)
 
 
 """
