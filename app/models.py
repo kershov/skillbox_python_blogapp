@@ -132,7 +132,11 @@ class Post(db.Model):
 
     @hybrid_property
     def active_posts(self):
-        return filter_by_active_posts(self.query)
+        return self.query.filter(*Post.active_posts_filter())
+
+    @staticmethod
+    def active_posts_filter():
+        return Post.is_active, Post.moderation_status == 'ACCEPTED', Post.time <= datetime.now()
 
     @staticmethod
     def count_by_author(user_id=None):
@@ -186,14 +190,12 @@ class Tag(db.Model):
 
     @hybrid_property
     def posts_tagged(self):
-        return filter_by_active_posts(Post.query.join(Post.tags).filter(Tag.id == self.id))
+        return Post.query.join(Post.tags).filter(Tag.id == self.id, *Post.active_posts_filter())
 
     @hybrid_property
     def active_tags(self):
-        """
-        JOINS: https://habr.com/ru/post/230643/
-        """
-        return filter_by_active_posts(Tag.query.with_entities(Tag, db.func.count('*').label('cnt')).join(Post.tags)) \
+        return Tag.query.with_entities(Tag, db.func.count('*').label('cnt')).join(Post.tags) \
+            .filter(*Post.active_posts_filter()) \
             .distinct() \
             .group_by(Tag.id) \
             .order_by(db.desc('cnt'), db.asc(Tag.name))
@@ -389,10 +391,3 @@ class Settings(db.Model):
 
     def __repr__(self):
         return f"<Setting(id='{self.id}', code='{self.code}', name='{self.name}', value='{self.value}'>"
-
-
-# TODO: Convert to @staticmethod in Post that returns tuple with filters
-def filter_by_active_posts(query):
-    return query.filter(Post.is_active) \
-        .filter(Post.moderation_status == 'ACCEPTED') \
-        .filter(Post.time <= datetime.now())

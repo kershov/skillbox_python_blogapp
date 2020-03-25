@@ -6,7 +6,7 @@ from app import db
 from app.api.helper import response
 from app.api.validators import validate_title, validate_text
 from app.helper import clear_html_tags
-from app.models import Vote, Post, Comment, filter_by_active_posts, Tag
+from app.models import Vote, Post, Comment, Tag
 from app.tg.client import send_telegram_message
 from app.tg.helper import escape
 
@@ -23,7 +23,7 @@ def posts_response(processor, items, total):
 
 
 def get_active_posts(mode=None):
-    return filter_by_active_posts(get_posts(mode))
+    return get_posts(mode).filter(*Post.active_posts_filter())
 
 
 def get_posts(mode=None):
